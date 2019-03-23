@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <style>
+        *{
+            padding:0;
+            margin:0;
+        }
+        ul{
+            list-style:none;
+        }
+        .page{
+            height:100vh;
+            overflow:hidden;
+            background:#ccc;
+        }
+        .datePicker .calendar{
+            position:absolute;
+            bottom:20px;
+            left:20px;
+            right:20px;
+            background:#fff;
+            border-radius:6px;
+            padding-top: 16px;
+            user-select: none;
+        }
+        .datePicker .box{
+            position:relative;
+            width:100%;
+            height:150px;
+            display:flex;
+        }
+        .datePicker .calendar ul{
+            flex:1;
+            text-align:center;
+        }
+        .datePicker .one{
+            line-height:24px;
+            font-size:12px;
+            color:#b3b3b3;
+        }
+        .datePicker .two{
+            line-height:30px;
+            font-size:16px;
+            color:#000;
+        }
+        .datePicker .three{
+            line-height:42px;
+            font-size:20px;
+            color:#f57b00;
+        }
+        .datePicker .btn{
+            display:flex;
+            text-align: center;
+            line-height:40px;
+            font-size:14px;
+        }
+        .datePicker .btn span{
+            flex:1;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="datePicker">
+            <div class="calendar" v-if="calendar">
+                <div class="box">
+                    <ul ref="year" @touchstart="start($event)" @touchmove="move($event,'year')" @touchend="end('year')">
+                        <li class="one">{{calendar.year-2}}</li>
+                        <li class="two">{{calendar.year-1}}</li>
+                        <li class="three">{{calendar.year}}</li>
+                        <li class="two">{{calendar.year+1}}</li>
+                        <li class="one">{{calendar.year+2}}</li>
+                    </ul>
+                    <ul ref="month" @touchstart="start($event)" @touchmove="move($event,'month')" @touchend="end('month')">
+                        <li class="one">{{calendar.month-2 | calendarFilter(calendar.maxMonth)}}</li>
+                        <li class="two">{{calendar.month-1 | calendarFilter(calendar.maxMonth)}}</li>
+                        <li class="three">{{calendar.month | calendarFilter(calendar.maxMonth)}}</li>
+                        <li class="two">{{calendar.month+1 | calendarFilter(calendar.maxMonth)}}</li>
+                        <li class="one">{{calendar.month+2 | calendarFilter(calendar.maxMonth)}}</li>
+                    </ul>
+                    <ul ref="date" @touchstart="start($event)" @touchmove="move($event,'date')" @touchend="end('date')">
+                        <li class="one">{{calendar.date-2 | calendarFilter(calendar.maxDate)}}</li>
+                        <li class="two">{{calendar.date-1 | calendarFilter(calendar.maxDate)}}</li>
+                        <li class="three">{{calendar.date | calendarFilter(calendar.maxDate)}}</li>
+                        <li class="two">{{calendar.date+1 | calendarFilter(calendar.maxDate)}}</li>
+                        <li class="one">{{calendar.date+2 | calendarFilter(calendar.maxDate)}}</li>
+                    </ul> 
+                </div>
+                <div class="btn">
+                    <span>取消</span>
+                    <span>确定</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el:".page",
+            data:{
+                calendar:{
+}
+            },
+            filters:{
+                calendarFilter:function(val,max){
+                    
+                    if(val < 1){
+                        return max + val*1;
+                    }else if(val >max){
+                        return val - max;
+                    }
+                    return val
+                }
+            },
+            mounted(){
+                document.querySelector('.page').addEventListener('touchstart',       function (e) {
+                    e.preventDefault();
+                });
+                var time = new Date();
+                this.calendar={
+                    year: time.getFullYear(),
+                    month: time.getMonth()*1 + 1,
+                    date: time.getDate(),
+                    start: 0,
+                    maxDate: (new Date(time.getFullYear(),time.getMonth()*1 + 1,0)).getDate(),
+                    maxMonth:12,
+                }
+            },
+            methods:{
+                start(e){
+                    this.calendar.start = e.changedTouches[0].clientY;
+                },
+                move(e,type){
+                    var x = e.changedTouches[0].clientY - this.calendar.start;
+                    this.$refs[type].style.marginTop = x/2 +"px";
+                    if(x < -(42 * 2)/1.8){
+                        this.$refs[type].style.marginTop = 0 + "px";
+                        this.calendar.start = e.changedTouches[0].clientY;
+                        if((type=='month' && this.calendar[type] ==  12) || (type=='date' && this.calendar[type] == this.calendar.maxDate)){
+                            this.$set(this.calendar, type , 1);
+                        }else{
+                            this.$set(this.calendar,type,++this.calendar[type])
+                        }
+                    }
+                    if(x > (42 * 2)/1.8){
+                        this.$refs[type].style.marginTop = 0 + "px";
+                        this.calendar.start = e.changedTouches[0].clientY;
+                        if(type=='month' && this.calendar[type] ==  1){
+                            this.$set(this.calendar, type , 12);
+                        }else{
+                            this.$set(this.calendar,type,--this.calendar[type])
+                        }
+                    }
+                },
+                end(type){
+                    this.$refs[type].style.marginTop = 0 + "px";
+                    var date = new Date(this.calendar.year,this.calendar.month,0);
+                    this.calendar.maxDate = date.getDate();
+                    if(this.calendar.date > this.calendar.maxDate){
+                        this.$set(this.calendar,"date",this.calendar.maxDate)
+                    }
+                }
+            }
+        })
+    </script>
+</body>
+</html>
